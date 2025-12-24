@@ -91,6 +91,52 @@ huggingface-cli download ResembleAI/chatterbox-turbo --local-dir ./chatterbox-tu
 
 Then modify the code to load from the local directory, or set the HF_TOKEN environment variable.
 
+## Video Synthesizer
+
+Create slideshow videos with AI-generated images and voice narration using `video_synthesizer.py`:
+
+```bash
+uv run --active video_synthesizer.py \
+  --delay 5 \
+  --similarity 0.65 \
+  --api-endpoint "https://api.z.ai/api/paas/v4" \
+  --model "glm-4.6v-flash" \
+  --api-key $Z_AI_API_KEY \
+  --resolution 1920x1080 \
+  --voice voices/nya_elyria.wav \
+  --script video_script.txt \
+  --output output/video.mp4
+```
+
+### Video Script Format
+
+The video script includes special `[IMG: prompt]` tags to generate images:
+
+```
+[IMG: Prompt for first image here]
+
+Sentence 1 here.
+Sentence 2 here.
+
+[IMG: Prompt for second image here]
+
+Sentence 3 here.
+Sentence 4 here.
+```
+
+- Images are generated based on the prompts in `[IMG: ...]` tags
+- Sentences between image tags are narrated using the voice clone
+- 500ms gap between sentences
+- 1000ms gap between slides (image + text block)
+
+### Dependencies
+
+The video synthesizer requires additional dependencies:
+
+```bash
+pip install opencv-python pillow pydub numpy requests
+```
+
 ## CPU Performance Notes
 
 This implementation is designed for CPU execution and will run slowly, especially on resource-constrained devices like Raspberry Pi. Keep input scripts short for reasonable processing times.

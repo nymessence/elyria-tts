@@ -32,6 +32,7 @@ Note: Chatterbox was developed and tested on Python 3.11 and Debian 11, and depe
 .
 ├── voice_synthesizer.py
 ├── example_script.txt
+├── example_script_paralinguistic.txt
 ├── voices/
 │   └── nya_elyria.wav
 ├── output/
@@ -42,6 +43,8 @@ Note: Chatterbox was developed and tested on Python 3.11 and Debian 11, and depe
 
 ## Usage
 
+### Basic Voice Cloning
+
 Run the voice synthesizer using the following command:
 
 ```bash
@@ -50,6 +53,20 @@ uv run voice_synthesizer.py \
   --script example_script.txt \
   --output output/example.wav
 ```
+
+### Paralinguistic Tags Support
+
+The Chatterbox-TTS Turbo model supports paralinguistic tags for expressive speech. Use the `--turbo` flag to enable support for tags like `[cough]`, `[laugh]`, `[chuckle]`:
+
+```bash
+uv run voice_synthesizer.py \
+  --voice voices/nya_elyria.wav \
+  --script example_script_paralinguistic.txt \
+  --output output/example_turbo.wav \
+  --turbo
+```
+
+**Note**: The turbo model requires downloading additional models from Hugging Face and may require authentication.
 
 ## CPU Performance Notes
 
@@ -60,6 +77,40 @@ Conservative defaults are used for CPU inference:
 - exaggeration: 0.5
 
 These values can be adjusted later for more expressive speech or GPU runs.
+
+## Kaggle Usage
+
+For Kaggle deployment, the repository will be cloned into `/tmp` but output should be saved to `kaggle/working`:
+
+```bash
+# Clone to /tmp
+cd /tmp
+git clone https://github.com/nymessence/elyria-tts.git
+cd elyria-tts
+
+# Setup (same as above)
+uv venv --python 3.11
+source .venv/bin/activate
+git clone https://github.com/resemble-ai/chatterbox.git
+pip install -e chatterbox/
+
+# Run with output to kaggle/working
+python voice_synthesizer.py \
+  --voice voices/nya_elyria.wav \
+  --script example_script.txt \
+  --output kaggle/working/output.wav
+```
+
+The setup script also works in Kaggle environments:
+
+```bash
+# In Kaggle
+cd /tmp
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/setup.sh)"
+cd elyria-tts
+source .venv/bin/activate
+python voice_synthesizer.py --voice voices/nya_elyria.wav --script example_script.txt --output kaggle/working/output.wav
+```
 
 ## Future Work
 

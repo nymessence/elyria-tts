@@ -66,7 +66,14 @@ uv run voice_synthesizer.py \
   --turbo
 ```
 
-**Note**: The turbo model requires downloading additional models from Hugging Face and may require authentication.
+**Note**: The turbo model requires downloading additional models from Hugging Face. If you encounter token requirements, you can download the models locally first:
+
+```bash
+# Download the turbo model manually
+huggingface-cli download ResembleAI/chatterbox-turbo --local-dir ./chatterbox-turbo-model
+```
+
+Then modify the code to load from the local directory, or set the HF_TOKEN environment variable.
 
 ## CPU Performance Notes
 
@@ -110,6 +117,13 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/ma
 cd elyria-tts
 source .venv/bin/activate
 python voice_synthesizer.py --voice voices/nya_elyria.wav --script example_script.txt --output kaggle/working/output.wav
+```
+
+For turbo model usage in Kaggle (if token issues occur), you can pre-download the model:
+
+```bash
+# Pre-download turbo model in Kaggle
+huggingface-cli download ResembleAI/chatterbox-turbo --local-dir ./chatterbox-turbo-model
 ```
 
 ## Future Work

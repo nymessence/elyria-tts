@@ -54,6 +54,22 @@ uv run voice_synthesizer.py \
   --output output/example.wav
 ```
 
+### Device Selection
+
+You can specify the device to run inference on using the `--device` parameter:
+
+```bash
+# CPU (default)
+python voice_synthesizer.py --device cpu [other args...]
+
+# GPU (CUDA)
+python voice_synthesizer.py --device cuda [other args...]
+python voice_synthesizer.py --device gpu [other args...]  # gpu is an alias for cuda
+
+# TPU (if available)
+python voice_synthesizer.py --device tpu [other args...]
+```
+
 ### Paralinguistic Tags Support
 
 The Chatterbox-TTS Turbo model supports paralinguistic tags for expressive speech. Use the `--turbo` flag to enable support for tags like `[cough]`, `[laugh]`, `[chuckle]`:

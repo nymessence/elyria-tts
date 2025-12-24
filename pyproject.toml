@@ -1,0 +1,14 @@
+[project]
+name = "elyria-tts"
+version = "0.1.0"
+description = "Nya Elyria Voice Synthesizer using Chatterbox-TTS"
+authors = [{name = "Nymessence", email = "nymessence@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.26.0",
+]
+
+[project.scripts]
+voice-synthesizer = "voice_synthesizer:main"

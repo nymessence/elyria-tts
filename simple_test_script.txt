@@ -1,0 +1,3 @@
+[IMG: A simple test image]
+
+This is a test sentence.

@@ -21,51 +21,63 @@ import torchaudio
 
 def generate_image_with_api(prompt, api_endpoint, model, api_key, resolution):
     """
-    Generate an image using the Z.AI API
+    Generate an image using the Z.AI API with glm-4.6v-flash model
     """
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
-    }
-    
-    width, height = resolution.split('x')
-    width, height = int(width), int(height)
-    
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "n": 1,
-        "size": f"{width}x{height}",
-        "response_format": "url"  # or "b64_json" depending on API
-    }
-    
-    response = requests.post(f"{api_endpoint}/images/generations", 
-                           headers=headers, json=payload)
-    
-    if response.status_code == 200:
-        data = response.json()
-        # Extract image URL from response (structure may vary by API)
-        if 'data' in data and len(data['data']) > 0:
-            if 'url' in data['data'][0]:
-                image_url = data['data'][0]['url']
-                # Download the image
-                img_response = requests.get(image_url)
-                if img_response.status_code == 200:
-                    # Save to temporary file
+    try:
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        width, height = resolution.split('x')
+        width, height = int(width), int(height)
+
+        # The glm-4.6v-flash model may support image generation through
+        # a vision/image generation endpoint. Try the standard image generation API first.
+        payload = {
+            "model": model,  # glm-4.6v-flash
+            "prompt": prompt,
+            "n": 1,
+            "size": f"{width}x{height}",
+            "response_format": "url"
+        }
+
+        response = requests.post(f"{api_endpoint}/images/generations",
+                               headers=headers, json=payload)
+
+        if response.status_code == 200:
+            data = response.json()
+            # Extract image URL from response (structure may vary by API)
+            if 'data' in data and len(data['data']) > 0:
+                if 'url' in data['data'][0]:
+                    image_url = data['data'][0]['url']
+                    # Download the image
+                    img_response = requests.get(image_url)
+                    if img_response.status_code == 200:
+                        # Save to temporary file
+                        temp_img = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+                        temp_img.write(img_response.content)
+                        temp_img.close()
+                        return temp_img.name
+                elif 'b64_json' in data['data'][0]:
+                    import base64
+                    img_data = base64.b64decode(data['data'][0]['b64_json'])
                     temp_img = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
-                    temp_img.write(img_response.content)
+                    temp_img.write(img_data)
                     temp_img.close()
                     return temp_img.name
-            elif 'b64_json' in data['data'][0]:
-                import base64
-                img_data = base64.b64decode(data['data'][0]['b64_json'])
-                temp_img = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
-                temp_img.write(img_data)
-                temp_img.close()
-                return temp_img.name
-    else:
-        print(f"Error generating image: {response.status_code} - {response.text}")
-    
+        else:
+            print(f"Primary API call failed: {response.status_code} - {response.text}")
+
+        # If the standard images/generations endpoint doesn't work with glm-4.6v-flash,
+        # we could potentially use the chat endpoint for a vision model that generates image descriptions
+        # but for now we'll just return None to trigger the fallback
+
+    except requests.exceptions.RequestException as e:
+        print(f"Network error during image generation: {e}")
+    except Exception as e:
+        print(f"Error during image generation: {e}")
+
     return None
 
 
@@ -75,18 +87,21 @@ def create_blank_image(width, height, text="Image Generation Failed"):
     """
     img = Image.new('RGB', (width, height), color=(73, 109, 137))
     d = ImageDraw.Draw(img)
-    
+
     # Try to use a default font
     try:
         font = ImageFont.truetype("DejaVuSans.ttf", 36)
     except:
         font = ImageFont.load_default()
-    
+
     # Calculate text position (center)
-    text_width, text_height = d.textsize(text, font=font)
+    # Use textbbox instead of textsize (which is deprecated)
+    bbox = d.textbbox((0, 0), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
     x = (width - text_width) // 2
     y = (height - text_height) // 2
-    
+
     d.text((x, y), text, fill=(255, 255, 255), font=font)
     return img
 

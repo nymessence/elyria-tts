@@ -117,7 +117,7 @@ cd "${ROOT}"
 # ----------------------------
 uv pip install \
   --python ${VENV_PYTHON} \
-  opencv-python pillow pydub requests
+  opencv-python pillow pydub requests perth
 
 # ----------------------------
 # Kaggle working files

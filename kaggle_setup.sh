@@ -101,15 +101,12 @@ else
 fi
 
 # ----------------------------
-# Verify torch binding (CRITICAL: must happen INSIDE venv)
+# Verify torch binding (use direct python call, not heredoc)
 # ----------------------------
-python - <<'EOF'
-import sys, torch
-print("Python:", sys.version)
-print("Executable:", sys.executable)
-print("Torch:", torch.__version__)
-print("Torch path:", torch.__file__)
-EOF
+echo ""
+echo "=== Verifying PyTorch Installation ==="
+${ROOT}/.venv/bin/python -c "import sys, torch; print('Python:', sys.version); print('Executable:', sys.executable); print('Torch:', torch.__version__); print('Torch path:', torch.__file__)"
+echo ""
 
 # ----------------------------
 # Chatterbox (source install, no deps)
@@ -132,9 +129,9 @@ pip install \
 # Kaggle working files
 # ----------------------------
 mkdir -p kaggle/working
-cp -f voice_synthesizer.py kaggle/working/
-cp -f video_synthesizer.py kaggle/working/
-cp -f example_script*.txt kaggle/working/ 2>/dev/null || true
+cp -f voice_synthesizer.py kaggle/working/ 2>/dev/null || echo "Note: voice_synthesizer.py not found"
+cp -f video_synthesizer.py kaggle/working/ 2>/dev/null || echo "Note: video_synthesizer.py not found"
+cp -f example_script*.txt kaggle/working/ 2>/dev/null || echo "Note: example scripts not found"
 cp -f video_script.txt kaggle/working/ 2>/dev/null || true
 cp -f test_video_script.txt kaggle/working/ 2>/dev/null || true
 

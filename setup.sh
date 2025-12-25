@@ -39,9 +39,10 @@ if [ ! -d "chatterbox" ]; then
     git clone https://github.com/resemble-ai/chatterbox.git
 fi
 
-echo "Installing Chatterbox-TTS from source..."
+echo "Installing Chatterbox-TTS from source with compatibility fixes..."
 cd chatterbox
-pip install -e .
+pip install numpy>=1.26.0
+pip install -e . --no-build-isolation
 cd ..
 
 # Install any additional dependencies from pyproject.toml

@@ -45,8 +45,10 @@ echo "Installing Chatterbox-TTS from source with compatibility fixes..."
 cd /tmp/elyria-tts/chatterbox
 
 # Install with specific numpy version to avoid build issues
-pip install numpy>=1.26.0
-pip install -e . --no-build-isolation
+pip install numpy>=1.26.0 --force-reinstall
+pip install -e . --no-build-isolation --no-deps
+# Install other dependencies separately after
+pip install torch torchaudio
 cd /tmp/elyria-tts
 
 # Install additional dependencies for video synthesizer

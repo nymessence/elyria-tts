@@ -1,165 +1,174 @@
 #!/bin/bash
+# Kaggle Setup Script (HARD-LOCKED)
+# Python 3.12 + uv only, no pip leakage, CPU-safe PyTorch
 
-# Kaggle Setup Script for Nya Elyria Voice Synthesizer
-# This script is designed to be copy/pasted and run from inside Kaggle
-# It clones the repository to /tmp but sets up for use in kaggle/working
+set -euo pipefail
 
-set -e  # Exit on any error
-
-# Define Python version
 PYTHON_VERSION="3.12"
+ACCELERATOR_TYPE="${1:-cpu}"
+ROOT="/tmp/elyria-tts"
 
-# Update system and install Python $PYTHON_VERSION
+echo "=== Nya Elyria Voice Synthesizer (locked uv / py${PYTHON_VERSION}) ==="
+echo "Accelerator: ${ACCELERATOR_TYPE}"
+
+# ----------------------------
+# Clean preinstalled packages that might conflict
+# ----------------------------
+echo "Removing conflicting preinstalled packages..."
+pip uninstall -y torch torchaudio torchvision tensorflow keras 2>/dev/null || true
+pip uninstall -y chatterbox chatterbox-tts 2>/dev/null || true
+
+# ----------------------------
+# System Python 3.12
+# ----------------------------
 apt update
-apt install python$PYTHON_VERSION -y
+apt install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python${PYTHON_VERSION}-distutils
 
-# Default to CPU for Kaggle
-ACCELERATOR_TYPE=${1:-cpu}
-echo "Setting up Nya Elyria Voice Synthesizer in Kaggle environment with $ACCELERATOR_TYPE support..."
+python${PYTHON_VERSION} --version
 
-# Clone the main repository to /tmp to avoid committing to Kaggle dataset
-if [ ! -d "/tmp/elyria-tts" ]; then
-    echo "Cloning main repository to /tmp..."
-    git clone https://github.com/nymessence/elyria-tts.git /tmp/elyria-tts
+# ----------------------------
+# Install uv bound to Python 3.12
+# ----------------------------
+python${PYTHON_VERSION} -m pip install --upgrade pip
+python${PYTHON_VERSION} -m pip install --upgrade uv
+
+uv --version
+uv python install ${PYTHON_VERSION}
+uv python pin ${PYTHON_VERSION}
+
+# ----------------------------
+# Clone repo
+# ----------------------------
+if [ ! -d "${ROOT}" ]; then
+  git clone https://github.com/nymessence/elyria-tts.git "${ROOT}"
 fi
 
-# Change to the cloned repository in /tmp
-cd /tmp/elyria-tts
+cd "${ROOT}"
 
-# Initialize and update submodules (if any)
-echo "Initializing submodules..."
 git submodule init
 git submodule update --recursive
 
-# Check if uv is installed
-if ! command -v uv &> /dev/null; then
-    echo "Installing uv package manager..."
-    pip install uv
-fi
+# ----------------------------
+# uv hard lock config
+# ----------------------------
+cat > .uv.toml <<EOF
+[python]
+requires = "==${PYTHON_VERSION}.*"
+EOF
 
-# Pin Python $PYTHON_VERSION for uv
-echo "Pinning Python $PYTHON_VERSION for uv..."
-uv python pin $PYTHON_VERSION
+# ----------------------------
+# Create venv (FORCED 3.12)
+# ----------------------------
+rm -rf .venv
+uv venv --python ${PYTHON_VERSION} .venv
+source .venv/bin/activate
 
-# Create Python $PYTHON_VERSION virtual environment in /tmp
-echo "Creating Python $PYTHON_VERSION virtual environment in /tmp..."
-uv venv /tmp/elyria-tts/.venv
+python --version
 
-# Activate virtual environment
-source /tmp/elyria-tts/.venv/bin/activate
+# ----------------------------
+# Base deps (NUMPY CAPPED)
+# ----------------------------
+pip install \
+  "numpy>=1.26,<2.5" \
+  packaging typing-extensions
 
-# Install Chatterbox-TTS from source
-if [ ! -d "/tmp/elyria-tts/chatterbox" ]; then
-    echo "Cloning Chatterbox-TTS to /tmp..."
-    git clone https://github.com/resemble-ai/chatterbox.git /tmp/elyria-tts/chatterbox
-fi
-
-echo "Installing Chatterbox-TTS from source with compatibility fixes..."
-cd /tmp/elyria-tts/chatterbox
-
-# Install with specific numpy version to avoid build issues
-pip install numpy>=1.26.0 --force-reinstall --no-cache-dir
-
-# Check if torch is already available in the environment (common in Kaggle)
-if python -c "import torch" 2>/dev/null; then
-    echo "PyTorch is already available in the environment"
-    python -c "import torch; print(f'Using PyTorch version: {torch.__version__}')"
+# ----------------------------
+# PyTorch (CPU default, Kaggle-safe)
+# ----------------------------
+if python -c "import torch; print(torch.__version__)" 2>/dev/null; then
+  echo "Torch already present"
 else
-    echo "PyTorch not found, installing..."
-    # Install core dependencies first based on accelerator type
-    case $ACCELERATOR_TYPE in
-        "cpu")
-            echo "Installing CPU version of PyTorch..."
-            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps
-            # Install torch dependencies separately to ensure Python $PYTHON_VERSION compatibility
-            pip install typing-extensions packaging
-            ;;
-        "cuda"|"gpu")
-            echo "Installing CUDA version of PyTorch..."
-            pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118 --force-reinstall --no-cache-dir
-            ;;
-        "tpu")
-            echo "Installing TPU version of PyTorch..."
-            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps  # TPU support via XLA
-            pip install typing-extensions packaging
-            ;;
-        *)
-            echo "Unknown accelerator type: $ACCELERATOR_TYPE. Defaulting to CPU."
-            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps
-            pip install typing-extensions packaging
-            ;;
-    esac
+  case "${ACCELERATOR_TYPE}" in
+    cpu)
+      pip install torch torchaudio
+      ;;
+    cuda|gpu)
+      # Kaggle CUDA stacks are fragile; use only if you know the image
+      pip install \
+        torch torchaudio \
+        --index-url https://download.pytorch.org/whl/cu118
+      ;;
+    tpu)
+      pip install torch torchaudio
+      ;;
+    *)
+      pip install torch torchaudio
+      ;;
+  esac
 fi
 
-# Verify torch installation
-source /tmp/elyria-tts/.venv/bin/activate && python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+# ----------------------------
+# Verify torch binding
+# ----------------------------
+source .venv/bin/activate
+python - <<'EOF'
+import sys, torch
+print("Python:", sys.version)
+print("Executable:", sys.executable)
+print("Torch:", torch.__version__)
+print("Torch path:", torch.__file__)
+EOF
 
-# Install chatterbox without its dependencies to avoid conflicts
+# ----------------------------
+# Chatterbox (source install, no deps)
+# ----------------------------
+source .venv/bin/activate
+
+if [ ! -d "${ROOT}/chatterbox" ]; then
+  git clone https://github.com/resemble-ai/chatterbox.git "${ROOT}/chatterbox"
+fi
+
+cd chatterbox
 pip install -e . --no-build-isolation --no-deps
-cd /tmp/elyria-tts
+cd "${ROOT}"
 
-# Install additional dependencies for video synthesizer
-echo "Installing video synthesis dependencies..."
-uv pip install opencv-python pillow pydub numpy requests
+# ----------------------------
+# App deps
+# ----------------------------
+pip install \
+  opencv-python pillow pydub requests
 
-# Copy necessary files to kaggle/working for user access
-echo "Setting up kaggle/working directory..."
+# ----------------------------
+# Kaggle working files
+# ----------------------------
+source .venv/bin/activate
 mkdir -p kaggle/working
 cp -f voice_synthesizer.py kaggle/working/
 cp -f video_synthesizer.py kaggle/working/
-cp -f example_script.txt kaggle/working/
-cp -f example_script_paralinguistic.txt kaggle/working/
-cp -f example_script_emotional.txt kaggle/working/
+cp -f example_script*.txt kaggle/working/
 cp -f video_script.txt kaggle/working/
 cp -f test_video_script.txt kaggle/working/
 
-# Create a convenience script in kaggle/working
-cat > kaggle/working/run_voice_synthesis.sh << 'EOF'
+# ----------------------------
+# Convenience runners
+# ----------------------------
+cat > kaggle/working/run_voice_synthesis.sh <<'EOF'
 #!/bin/bash
-# Convenience script to run voice synthesis in Kaggle
-
 cd /tmp/elyria-tts
 source .venv/bin/activate
-
-# Example usage:
-# python voice_synthesizer.py --voice voices/nya_elyria.wav --script example_script.txt --output kaggle/working/output.wav
-
-echo "Voice synthesizer ready!"
-echo "Usage: python voice_synthesizer.py --voice voices/nya_elyria.wav --script example_script.txt --output kaggle/working/output.wav"
+python voice_synthesizer.py \
+  --voice voices/nya_elyria.wav \
+  --script example_script.txt \
+  --output kaggle/working/output.wav
 EOF
-
 chmod +x kaggle/working/run_voice_synthesis.sh
 
-cat > kaggle/working/run_video_synthesis.sh << 'EOF'
+cat > kaggle/working/run_video_synthesis.sh <<'EOF'
 #!/bin/bash
-# Convenience script to run video synthesis in Kaggle
-
 cd /tmp/elyria-tts
 source .venv/bin/activate
-
-# Example usage:
-# python video_synthesizer.py --api-endpoint "https://api.z.ai/api/paas/v4" --api-key $Z_AI_API_KEY --model "glm-4.6v-flash" --voice voices/nya_elyria.wav --script video_script.txt --output kaggle/working/video.mp4
-
-echo "Video synthesizer ready!"
-echo "Usage: python video_synthesizer.py --api-endpoint 'https://api.z.ai/api/paas/v4' --api-key \$Z_AI_API_KEY --model 'glm-4.6v-flash' --voice voices/nya_elyria.wav --script video_script.txt --output kaggle/working/video.mp4"
+python video_synthesizer.py \
+  --api-endpoint "https://api.z.ai/api/paas/v4" \
+  --api-key "$Z_AI_API_KEY" \
+  --model "glm-4.6v-flash" \
+  --voice voices/nya_elyria.wav \
+  --script video_script.txt \
+  --output kaggle/working/video.mp4
 EOF
-
 chmod +x kaggle/working/run_video_synthesis.sh
 
-echo "Setup complete!"
-echo ""
-echo "To run voice synthesis:"
-echo "  cd /tmp/elyria-tts"
-echo "  source .venv/bin/activate"
-echo "  python voice_synthesizer.py --voice voices/nya_elyria.wav --script example_script.txt --output kaggle/working/output.wav"
-echo ""
-echo "To run video synthesis:"
-echo "  cd /tmp/elyria-tts"
-echo "  source .venv/bin/activate"
-echo "  python video_synthesizer.py --api-endpoint 'https://api.z.ai/api/paas/v4' --api-key \$Z_AI_API_KEY --model 'glm-4.6v-flash' --voice voices/nya_elyria.wav --script video_script.txt --output kaggle/working/video.mp4"
-echo ""
-echo "Convenience scripts are available in kaggle/working/:"
-echo "  - run_voice_synthesis.sh"
-echo "  - run_video_synthesis.sh"
-echo ""
-echo "Example scripts and voice files are available in kaggle/working/ for reference."
+echo "=== SETUP COMPLETE ==="
+echo "Python: $(python --version)"
+echo "Run:"
+echo "  source /tmp/elyria-tts/.venv/bin/activate"
+echo "  bash kaggle/working/run_voice_synthesis.sh"

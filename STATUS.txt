@@ -1,0 +1,1 @@
+BLOCKED: Kaggle authentication failed after 3 retry attempts. Execution could not proceed. All benchmarks are UNVERIFIED synthetic estimates.

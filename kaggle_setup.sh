@@ -63,7 +63,7 @@ else
     case $ACCELERATOR_TYPE in
         "cpu")
             echo "Installing CPU version of PyTorch..."
-            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps
+            pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps
             # Install torch dependencies separately to ensure Python 3.11 compatibility
             pip install typing-extensions packaging
             ;;
@@ -73,12 +73,12 @@ else
             ;;
         "tpu")
             echo "Installing TPU version of PyTorch..."
-            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps  # TPU support via XLA
+            pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps  # TPU support via XLA
             pip install typing-extensions packaging
             ;;
         *)
             echo "Unknown accelerator type: $ACCELERATOR_TYPE. Defaulting to CPU."
-            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps
+            pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps
             pip install typing-extensions packaging
             ;;
     esac

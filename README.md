@@ -183,6 +183,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/ma
 ```
 
 The `kaggle_setup.sh` script:
+- Updates system and installs Python 3.12
 - Clones the repository to `/tmp` to avoid committing to Kaggle dataset
 - Sets up the Python environment in `/tmp`
 - Copies necessary files to `kaggle/working` for user access
@@ -190,6 +191,54 @@ The `kaggle_setup.sh` script:
 - Installs all required dependencies including video synthesis dependencies
 
 After running the setup script, you can run synthesis commands with outputs saved to `kaggle/working/`.
+
+### Kaggle Usage Methods
+
+#### Method 1: Direct API Access
+You can use the voice and video synthesizers directly via the Kaggle API by setting up your notebook with the appropriate accelerator settings:
+
+1. Create a new Kaggle notebook
+2. Set accelerator to T4 x2 (for GPU support if needed)
+3. Enable internet access in notebook settings
+4. Run the setup command in the first cell
+5. Use the synthesizers in subsequent cells
+
+#### Method 2: Your Own Notebook
+To create your own notebook with the voice synthesizer:
+
+1. Create a new Kaggle notebook
+2. In the notebook settings, ensure:
+   - Accelerator: T4 x2 (or CPU as needed)
+   - Internet: Enabled
+   - GPU: Enabled if using GPU mode
+3. Add the setup command to a cell:
+   ```bash
+   !bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/kaggle_setup.sh) cpu"
+   ```
+4. Add your voice synthesis code in subsequent cells:
+   ```python
+   import sys
+   sys.path.append('/tmp/elyria-tts')
+   # Now you can use the synthesizer modules
+   ```
+
+#### Method 3: Pre-configured Notebook
+Use the pre-configured notebook template by forking the repository and adapting it for your specific use case.
+
+## Configuration Options
+
+The setup script supports different accelerator types:
+
+```bash
+# CPU only (default, recommended for initial setup)
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/kaggle_setup.sh)" cpu
+
+# GPU (CUDA) for faster inference
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/kaggle_setup.sh)" gpu
+
+# TPU support (if available)
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/kaggle_setup.sh)" tpu
+```
 
 ## Kaggle Usage
 

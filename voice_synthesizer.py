@@ -48,49 +48,19 @@ def main():
         try:
             from chatterbox.tts_turbo import ChatterboxTurboTTS
             print("Loading ChatterboxTurboTTS model (with paralinguistic tags support)...")
-            # Add timeout for model loading
-            import signal
-
-            def timeout_handler(signum, frame):
-                raise TimeoutError("Model loading timed out after 300 seconds")
-
-            # Set a timeout for model loading to prevent infinite hangs
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(300)  # 5 minutes timeout
-
-            try:
-                tts = ChatterboxTurboTTS.from_pretrained(device=device)
-                signal.alarm(0)  # Cancel the alarm
-            except TimeoutError:
-                print("Error: Model loading timed out. The model may be too large for this environment.")
-                raise
+            tts = ChatterboxTurboTTS.from_pretrained(device=device)
         except ImportError:
             raise ImportError("ChatterboxTurboTTS not found. Please install chatterbox-tts.")
     else:
         try:
             from chatterbox import ChatterboxTTS
             print("Loading ChatterboxTTS model...")
-            # Add timeout for model loading
-            import signal
+            tts = ChatterboxTTS.from_pretrained(device=device)
 
-            def timeout_handler(signum, frame):
-                raise TimeoutError("Model loading timed out after 300 seconds")
-
-            # Set a timeout for model loading to prevent infinite hangs
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(300)  # 5 minutes timeout
-
-            try:
-                tts = ChatterboxTTS.from_pretrained(device=device)
-                signal.alarm(0)  # Cancel the alarm
-
-                # Handle the case where watermarker is not available
-                if perth.PerthImplicitWatermarker is None:
-                    print("Warning: Perth watermarker not available, using dummy watermarker")
-                    tts.watermarker = perth.DummyWatermarker()
-            except TimeoutError:
-                print("Error: Model loading timed out. The model may be too large for this environment.")
-                raise
+            # Handle the case where watermarker is not available
+            if perth.PerthImplicitWatermarker is None:
+                print("Warning: Perth watermarker not available, using dummy watermarker")
+                tts.watermarker = perth.DummyWatermarker()
         except ImportError:
             raise ImportError("ChatterboxTTS not found. Please install chatterbox-tts.")
 
@@ -98,38 +68,24 @@ def main():
     cfg_weight = 0.5
     exaggeration = 0.5
 
-    # Generate the audio using the voice reference with timeout protection
+    # Generate the audio using the voice reference
     print("Generating audio...")
-    import signal
-
-    def timeout_handler(signum, frame):
-        raise TimeoutError("Audio generation timed out after 600 seconds")
-
-    # Set a timeout for audio generation to prevent infinite hangs during inference
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(600)  # 10 minutes timeout for audio generation
-
-    try:
-        if args.turbo:
-            # For turbo model, use audio prompt path in generate method
-            audio = tts.generate(
-                text=script_text,
-                audio_prompt_path=str(voice_path),
-                cfg_weight=cfg_weight,
-                exaggeration=exaggeration
-            )
-        else:
-            # For regular model, prepare conditionals first
-            tts.prepare_conditionals(str(voice_path), exaggeration=exaggeration)
-            audio = tts.generate(
-                text=script_text,
-                cfg_weight=cfg_weight,
-                exaggeration=exaggeration
-            )
-        signal.alarm(0)  # Cancel the alarm
-    except TimeoutError:
-        print("Error: Audio generation timed out. The script may be too long for this environment.")
-        raise
+    if args.turbo:
+        # For turbo model, use audio prompt path in generate method
+        audio = tts.generate(
+            text=script_text,
+            audio_prompt_path=str(voice_path),
+            cfg_weight=cfg_weight,
+            exaggeration=exaggeration
+        )
+    else:
+        # For regular model, prepare conditionals first
+        tts.prepare_conditionals(str(voice_path), exaggeration=exaggeration)
+        audio = tts.generate(
+            text=script_text,
+            cfg_weight=cfg_weight,
+            exaggeration=exaggeration
+        )
 
     # Save the output using torchaudio
     output_path = Path(args.output)

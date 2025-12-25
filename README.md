@@ -26,6 +26,32 @@ pip install -e .
 
 Note: Chatterbox was developed and tested on Python 3.11 and Debian 11, and dependencies are pinned in `pyproject.toml`.
 
+### Accelerator Support
+
+The setup scripts support different hardware accelerators:
+
+#### CPU Setup (default)
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/setup.sh)" cpu
+```
+
+#### GPU (CUDA) Setup
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/setup.sh)" gpu
+# or
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/setup.sh)" cuda
+```
+
+#### TPU Setup
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/setup.sh)" tpu
+```
+
+The same options work for the Kaggle setup script:
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/kaggle_setup.sh)" cpu
+```
+
 ## Project Structure
 
 ```

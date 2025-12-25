@@ -6,7 +6,9 @@
 
 set -e  # Exit on any error
 
-echo "Setting up Nya Elyria Voice Synthesizer in Kaggle environment..."
+# Default to CPU for Kaggle
+ACCELERATOR_TYPE=${1:-cpu}
+echo "Setting up Nya Elyria Voice Synthesizer in Kaggle environment with $ACCELERATOR_TYPE support..."
 
 # Clone the main repository to /tmp to avoid committing to Kaggle dataset
 if [ ! -d "/tmp/elyria-tts" ]; then
@@ -47,8 +49,25 @@ cd /tmp/elyria-tts/chatterbox
 # Install with specific numpy version to avoid build issues
 pip install numpy>=1.26.0 --force-reinstall --no-cache-dir
 
-# Install core dependencies first
-pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu  # Use CPU version for compatibility
+# Install core dependencies first based on accelerator type
+case $ACCELERATOR_TYPE in
+    "cpu")
+        echo "Installing CPU version of PyTorch..."
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+        ;;
+    "cuda"|"gpu")
+        echo "Installing CUDA version of PyTorch..."
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+        ;;
+    "tpu")
+        echo "Installing TPU version of PyTorch..."
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu  # TPU support via XLA
+        ;;
+    *)
+        echo "Unknown accelerator type: $ACCELERATOR_TYPE. Defaulting to CPU."
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+        ;;
+esac
 
 # Install chatterbox without its dependencies to avoid conflicts
 pip install -e . --no-build-isolation --no-deps

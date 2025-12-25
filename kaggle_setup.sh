@@ -22,7 +22,7 @@ pip uninstall -y chatterbox chatterbox-tts 2>/dev/null || true
 # System Python 3.12
 # ----------------------------
 apt update
-apt install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python${PYTHON_VERSION}-distutils
+apt install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv
 
 python${PYTHON_VERSION} --version
 

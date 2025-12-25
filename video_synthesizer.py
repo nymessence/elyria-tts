@@ -292,8 +292,20 @@ def create_video(segments, voice_path, output_path, api_endpoint, model, api_key
         if seg['sentence'] == '[SILENCE_GAP]':
             # Add frames for 500ms gap
             gap_frames = int(500 / frame_duration_ms)
+
+            # Add safeguard to prevent extremely large number of frames
+            if gap_frames > 10000:  # Limit for silence gaps
+                print(f"Warning: Gap duration too long, limiting frames to 10000")
+                gap_frames = 10000
+
             image = cv2.imread(seg['image_path'])
-            image = cv2.resize(image, (width, height))
+            if image is None:
+                print(f"Error: Could not load image from {seg['image_path']} for gap")
+                # Create a fallback image
+                image = np.zeros((height, width, 3), dtype=np.uint8)
+                image[:] = [73, 109, 137]  # Default blue color
+            else:
+                image = cv2.resize(image, (width, height))
 
             for _ in range(gap_frames):
                 video_frames.append(image.copy())
@@ -307,9 +319,20 @@ def create_video(segments, voice_path, output_path, api_endpoint, model, api_key
             # Calculate number of frames for this audio
             num_frames = int(audio_duration_ms / frame_duration_ms)
 
+            # Add safeguard to prevent extremely large number of frames
+            if num_frames > 100000:  # Limit to prevent memory issues
+                print(f"Warning: Audio duration too long ({audio_duration_ms}ms), limiting frames to 100000")
+                num_frames = 100000
+
             # Load and resize the image
             image = cv2.imread(seg['image_path'])
-            image = cv2.resize(image, (width, height))
+            if image is None:
+                print(f"Error: Could not load image from {seg['image_path']}")
+                # Create a fallback image
+                image = np.zeros((height, width, 3), dtype=np.uint8)
+                image[:] = [73, 109, 137]  # Default blue color
+            else:
+                image = cv2.resize(image, (width, height))
 
             # Add frames for this image
             for _ in range(num_frames):

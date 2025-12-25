@@ -48,19 +48,49 @@ def main():
         try:
             from chatterbox.tts_turbo import ChatterboxTurboTTS
             print("Loading ChatterboxTurboTTS model (with paralinguistic tags support)...")
-            tts = ChatterboxTurboTTS.from_pretrained(device=device)
+            # Add timeout for model loading
+            import signal
+
+            def timeout_handler(signum, frame):
+                raise TimeoutError("Model loading timed out after 300 seconds")
+
+            # Set a timeout for model loading to prevent infinite hangs
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(300)  # 5 minutes timeout
+
+            try:
+                tts = ChatterboxTurboTTS.from_pretrained(device=device)
+                signal.alarm(0)  # Cancel the alarm
+            except TimeoutError:
+                print("Error: Model loading timed out. The model may be too large for this environment.")
+                raise
         except ImportError:
             raise ImportError("ChatterboxTurboTTS not found. Please install chatterbox-tts.")
     else:
         try:
             from chatterbox import ChatterboxTTS
             print("Loading ChatterboxTTS model...")
-            tts = ChatterboxTTS.from_pretrained(device=device)
+            # Add timeout for model loading
+            import signal
 
-            # Handle the case where watermarker is not available
-            if perth.PerthImplicitWatermarker is None:
-                print("Warning: Perth watermarker not available, using dummy watermarker")
-                tts.watermarker = perth.DummyWatermarker()
+            def timeout_handler(signum, frame):
+                raise TimeoutError("Model loading timed out after 300 seconds")
+
+            # Set a timeout for model loading to prevent infinite hangs
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(300)  # 5 minutes timeout
+
+            try:
+                tts = ChatterboxTTS.from_pretrained(device=device)
+                signal.alarm(0)  # Cancel the alarm
+
+                # Handle the case where watermarker is not available
+                if perth.PerthImplicitWatermarker is None:
+                    print("Warning: Perth watermarker not available, using dummy watermarker")
+                    tts.watermarker = perth.DummyWatermarker()
+            except TimeoutError:
+                print("Error: Model loading timed out. The model may be too large for this environment.")
+                raise
         except ImportError:
             raise ImportError("ChatterboxTTS not found. Please install chatterbox-tts.")
 

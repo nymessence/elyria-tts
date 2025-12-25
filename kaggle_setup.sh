@@ -53,21 +53,24 @@ pip install numpy>=1.26.0 --force-reinstall --no-cache-dir
 case $ACCELERATOR_TYPE in
     "cpu")
         echo "Installing CPU version of PyTorch..."
-        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir
         ;;
     "cuda"|"gpu")
         echo "Installing CUDA version of PyTorch..."
-        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118 --force-reinstall --no-cache-dir
         ;;
     "tpu")
         echo "Installing TPU version of PyTorch..."
-        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu  # TPU support via XLA
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir  # TPU support via XLA
         ;;
     *)
         echo "Unknown accelerator type: $ACCELERATOR_TYPE. Defaulting to CPU."
-        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir
         ;;
 esac
+
+# Verify torch installation
+python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
 
 # Install chatterbox without its dependencies to avoid conflicts
 pip install -e . --no-build-isolation --no-deps

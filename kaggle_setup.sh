@@ -36,7 +36,7 @@ fi
 
 # Create Python 3.12 virtual environment in /tmp
 echo "Creating Python 3.12 virtual environment in /tmp..."
-uv venv --python 3.12 /tmp/elyria-tts/.venv
+uv venv --python /usr/bin/python3.12 /tmp/elyria-tts/.venv
 
 # Activate virtual environment
 source /tmp/elyria-tts/.venv/bin/activate

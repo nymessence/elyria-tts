@@ -79,7 +79,7 @@ pip install \
 # PyTorch (CPU default, Kaggle-safe)
 # ----------------------------
 if python -c "import torch; print(torch.__version__)" 2>/dev/null; then
-  echo "Torch already present"
+  echo "Torch already present in venv"
 else
   case "${ACCELERATOR_TYPE}" in
     cpu)
@@ -101,9 +101,8 @@ else
 fi
 
 # ----------------------------
-# Verify torch binding
+# Verify torch binding (CRITICAL: must happen INSIDE venv)
 # ----------------------------
-source .venv/bin/activate
 python - <<'EOF'
 import sys, torch
 print("Python:", sys.version)
@@ -115,8 +114,6 @@ EOF
 # ----------------------------
 # Chatterbox (source install, no deps)
 # ----------------------------
-source .venv/bin/activate
-
 if [ ! -d "${ROOT}/chatterbox" ]; then
   git clone https://github.com/resemble-ai/chatterbox.git "${ROOT}/chatterbox"
 fi
@@ -134,13 +131,12 @@ pip install \
 # ----------------------------
 # Kaggle working files
 # ----------------------------
-source .venv/bin/activate
 mkdir -p kaggle/working
 cp -f voice_synthesizer.py kaggle/working/
 cp -f video_synthesizer.py kaggle/working/
-cp -f example_script*.txt kaggle/working/
-cp -f video_script.txt kaggle/working/
-cp -f test_video_script.txt kaggle/working/
+cp -f example_script*.txt kaggle/working/ 2>/dev/null || true
+cp -f video_script.txt kaggle/working/ 2>/dev/null || true
+cp -f test_video_script.txt kaggle/working/ 2>/dev/null || true
 
 # ----------------------------
 # Convenience runners
@@ -170,8 +166,10 @@ python video_synthesizer.py \
 EOF
 chmod +x kaggle/working/run_video_synthesis.sh
 
+echo ""
 echo "=== SETUP COMPLETE ==="
 echo "Python: $(python --version)"
+echo "PyTorch: $(python -c 'import torch; print(torch.__version__)')"
 echo ""
 echo "IMPORTANT: Virtual environment activation is required for all operations:"
 echo "  source /tmp/elyria-tts/.venv/bin/activate"

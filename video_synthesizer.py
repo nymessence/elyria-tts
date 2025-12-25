@@ -245,7 +245,7 @@ def create_video(segments, voice_path, output_path, api_endpoint, model, api_key
 
                 # Create audio for this sentence
                 audio_path = temp_dir / f"audio_{sentence_idx}.wav"
-                synthesize_voice(sentence, voice_path, audio_path)
+                synthesize_voice(sentence, voice_path, audio_path, device="cpu")
 
                 # Add this sentence audio with its corresponding image
                 audio_segments.append({

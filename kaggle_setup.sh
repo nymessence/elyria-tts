@@ -26,14 +26,11 @@ apt install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv
 
 python${PYTHON_VERSION} --version
 
-# Install pip for Python 3.12
-python${PYTHON_VERSION} -m ensurepip --upgrade
-
 # ----------------------------
-# Install uv bound to Python 3.12
+# Install uv
 # ----------------------------
-python${PYTHON_VERSION} -m pip install --upgrade pip
-python${PYTHON_VERSION} -m pip install --upgrade uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.cargo/bin:$PATH"
 
 uv --version
 uv python install ${PYTHON_VERSION}
@@ -52,77 +49,74 @@ git submodule init
 git submodule update --recursive
 
 # ----------------------------
-# uv hard lock config
-# ----------------------------
-cat > .uv.toml <<EOF
-[python]
-requires = "==${PYTHON_VERSION}.*"
-EOF
-
-# ----------------------------
-# Create venv (FORCED 3.12)
+# Create venv with uv
 # ----------------------------
 rm -rf .venv
 uv venv --python ${PYTHON_VERSION} .venv
-source .venv/bin/activate
 
-python --version
+# CRITICAL: Define venv paths explicitly
+VENV_PYTHON="${ROOT}/.venv/bin/python"
+
+${VENV_PYTHON} --version
 
 # ----------------------------
-# Base deps (NUMPY CAPPED)
+# Base deps (NUMPY CAPPED) - use uv pip
 # ----------------------------
-pip install \
+uv pip install \
+  --python ${VENV_PYTHON} \
   "numpy>=1.26,<2.5" \
   packaging typing-extensions
 
 # ----------------------------
-# PyTorch (CPU default, Kaggle-safe)
+# PyTorch (CPU default, Kaggle-safe) - use uv pip
 # ----------------------------
-if python -c "import torch; print(torch.__version__)" 2>/dev/null; then
+if ${VENV_PYTHON} -c "import torch; print(torch.__version__)" 2>/dev/null; then
   echo "Torch already present in venv"
 else
   case "${ACCELERATOR_TYPE}" in
     cpu)
-      pip install torch torchaudio
+      uv pip install --python ${VENV_PYTHON} torch torchaudio
       ;;
     cuda|gpu)
       # Kaggle CUDA stacks are fragile; use only if you know the image
-      pip install \
+      uv pip install \
+        --python ${VENV_PYTHON} \
         torch torchaudio \
         --index-url https://download.pytorch.org/whl/cu118
       ;;
     tpu)
-      pip install torch torchaudio
+      uv pip install --python ${VENV_PYTHON} torch torchaudio
       ;;
     *)
-      pip install torch torchaudio
+      uv pip install --python ${VENV_PYTHON} torch torchaudio
       ;;
   esac
 fi
 
 # ----------------------------
-# Verify torch binding (use direct python call, not heredoc)
+# Verify torch binding
 # ----------------------------
 echo ""
 echo "=== Verifying PyTorch Installation ==="
-${ROOT}/.venv/bin/python -c "import sys, torch; print('Python:', sys.version); print('Executable:', sys.executable); print('Torch:', torch.__version__); print('Torch path:', torch.__file__)"
+${VENV_PYTHON} -c "import sys, torch; print('Python:', sys.version); print('Executable:', sys.executable); print('Torch:', torch.__version__); print('Torch path:', torch.__file__)"
 echo ""
 
 # ----------------------------
-# Chatterbox (source install, no deps)
+# Chatterbox (source install, no deps) - use uv pip
 # ----------------------------
 if [ ! -d "${ROOT}/chatterbox" ]; then
   git clone https://github.com/resemble-ai/chatterbox.git "${ROOT}/chatterbox"
 fi
 
 cd chatterbox
-pip install -e . --no-build-isolation --no-deps
+uv pip install --python ${VENV_PYTHON} -e . --no-build-isolation --no-deps
 cd "${ROOT}"
 
 # ----------------------------
-# App deps
+# App deps - use uv pip
 # ----------------------------
-pip install \
+uv pip install \
+  --python ${VENV_PYTHON} \
   opencv-python pillow pydub requests
 
 # ----------------------------
@@ -165,8 +159,8 @@ chmod +x kaggle/working/run_video_synthesis.sh
 
 echo ""
 echo "=== SETUP COMPLETE ==="
-echo "Python: $(python --version)"
-echo "PyTorch: $(python -c 'import torch; print(torch.__version__)')"
+echo "Python: $(${VENV_PYTHON} --version 2>&1)"
+echo "PyTorch: $(${VENV_PYTHON} -c 'import torch; print(torch.__version__)')"
 echo ""
 echo "IMPORTANT: Virtual environment activation is required for all operations:"
 echo "  source /tmp/elyria-tts/.venv/bin/activate"

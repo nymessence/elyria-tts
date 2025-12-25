@@ -41,10 +41,13 @@ fi
 
 echo "Installing Chatterbox-TTS from source with compatibility fixes..."
 cd chatterbox
-pip install numpy>=1.26.0 --force-reinstall
+pip install numpy>=1.26.0 --force-reinstall --no-cache-dir
+
+# Install core dependencies first
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu  # Use CPU version for compatibility
+
+# Install chatterbox without its dependencies to avoid conflicts
 pip install -e . --no-build-isolation --no-deps
-# Install other dependencies separately after
-pip install torch torchaudio
 cd ..
 
 # Install any additional dependencies from pyproject.toml

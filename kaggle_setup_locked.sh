@@ -12,6 +12,13 @@ echo "=== Nya Elyria Voice Synthesizer (locked uv / py${PYTHON_VERSION}) ==="
 echo "Accelerator: ${ACCELERATOR_TYPE}"
 
 # ----------------------------
+# Clean preinstalled packages that might conflict
+# ----------------------------
+echo "Removing conflicting preinstalled packages..."
+pip uninstall -y torch torchaudio torchvision tensorflow keras 2>/dev/null || true
+pip uninstall -y chatterbox chatterbox-tts 2>/dev/null || true
+
+# ----------------------------
 # System Python 3.12
 # ----------------------------
 apt update

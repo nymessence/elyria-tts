@@ -6,6 +6,10 @@
 
 set -e  # Exit on any error
 
+# Update system and install Python 3.12
+apt update
+apt install python3.12 -y
+
 # Default to CPU for Kaggle
 ACCELERATOR_TYPE=${1:-cpu}
 echo "Setting up Nya Elyria Voice Synthesizer in Kaggle environment with $ACCELERATOR_TYPE support..."

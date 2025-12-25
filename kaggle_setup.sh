@@ -98,7 +98,11 @@ fi
 # ----------------------------
 echo ""
 echo "=== Verifying PyTorch Installation ==="
-${VENV_PYTHON} -c "import sys, torch; print('Python:', sys.version); print('Executable:', sys.executable); print('Torch:', torch.__version__); print('Torch path:', torch.__file__)"
+if ${VENV_PYTHON} -c "import torch; print('Torch version:', torch.__version__)"; then
+    echo "✓ PyTorch installation verified successfully"
+else
+    echo "⚠ PyTorch verification failed, but continuing setup"
+fi
 echo ""
 
 # ----------------------------

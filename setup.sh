@@ -45,29 +45,36 @@ echo "Installing Chatterbox-TTS from source with compatibility fixes..."
 cd chatterbox
 pip install numpy>=1.26.0 --force-reinstall --no-cache-dir
 
-# Install core dependencies first based on accelerator type
-case $ACCELERATOR_TYPE in
-    "cpu")
-        echo "Installing CPU version of PyTorch..."
-        pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps
-        # Install torch dependencies separately to ensure Python 3.11 compatibility
-        pip install typing-extensions packaging
-        ;;
-    "cuda"|"gpu")
-        echo "Installing CUDA version of PyTorch..."
-        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118 --force-reinstall --no-cache-dir
-        ;;
-    "tpu")
-        echo "Installing TPU version of PyTorch..."
-        pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps  # TPU support via XLA
-        pip install typing-extensions packaging
-        ;;
-    *)
-        echo "Unknown accelerator type: $ACCELERATOR_TYPE. Defaulting to CPU."
-        pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps
-        pip install typing-extensions packaging
-        ;;
-esac
+# Check if torch is already available in the environment
+if python -c "import torch" 2>/dev/null; then
+    echo "PyTorch is already available in the environment"
+    python -c "import torch; print(f'Using PyTorch version: {torch.__version__}')"
+else
+    echo "PyTorch not found, installing..."
+    # Install core dependencies first based on accelerator type
+    case $ACCELERATOR_TYPE in
+        "cpu")
+            echo "Installing CPU version of PyTorch..."
+            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps
+            # Install torch dependencies separately to ensure Python 3.11 compatibility
+            pip install typing-extensions packaging
+            ;;
+        "cuda"|"gpu")
+            echo "Installing CUDA version of PyTorch..."
+            pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118 --force-reinstall --no-cache-dir
+            ;;
+        "tpu")
+            echo "Installing TPU version of PyTorch..."
+            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps  # TPU support via XLA
+            pip install typing-extensions packaging
+            ;;
+        *)
+            echo "Unknown accelerator type: $ACCELERATOR_TYPE. Defaulting to CPU."
+            pip install torch torchaudio --force-reinstall --no-cache-dir --no-deps
+            pip install typing-extensions packaging
+            ;;
+    esac
+fi
 
 # Verify torch installation
 python -c "import torch; print(f'PyTorch version: {torch.__version__}')"

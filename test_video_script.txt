@@ -1,0 +1,7 @@
+[IMG: A simple blue background with white text saying 'TEST IMAGE 1']
+
+This is the first sentence of our test video.
+
+[IMG: A green background with yellow text saying 'TEST IMAGE 2']
+
+This is the second sentence of our test video.

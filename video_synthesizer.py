@@ -43,7 +43,7 @@ def generate_image_with_api(prompt, api_endpoint, model, api_key, resolution):
         }
 
         response = requests.post(f"{api_endpoint}/images/generations",
-                               headers=headers, json=payload)
+                               headers=headers, json=payload, timeout=30)
 
         if response.status_code == 200:
             data = response.json()
@@ -52,7 +52,7 @@ def generate_image_with_api(prompt, api_endpoint, model, api_key, resolution):
                 if 'url' in data['data'][0]:
                     image_url = data['data'][0]['url']
                     # Download the image
-                    img_response = requests.get(image_url)
+                    img_response = requests.get(image_url, timeout=30)
                     if img_response.status_code == 200:
                         # Save to temporary file
                         temp_img = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)

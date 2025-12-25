@@ -151,29 +151,54 @@ def synthesize_voice(text, voice_path, output_path, device="cpu"):
     Use the existing voice synthesizer functionality to generate audio
     """
     try:
+        import signal
         from chatterbox import ChatterboxTTS
         import perth
-        
-        # Initialize model
-        tts = ChatterboxTTS.from_pretrained(device=device)
-        
+
+        # Add timeout for model loading
+        def timeout_handler(signum, frame):
+            raise TimeoutError("Model loading timed out after 300 seconds")
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(300)  # 5 minutes timeout for model loading
+
+        try:
+            # Initialize model
+            tts = ChatterboxTTS.from_pretrained(device=device)
+            signal.alarm(0)  # Cancel the alarm
+        except TimeoutError:
+            print("Error: Model loading timed out in synthesize_voice function")
+            raise
+
         # Handle watermarker
         if perth.PerthImplicitWatermarker is None:
             tts.watermarker = perth.DummyWatermarker()
-        
+
         # Prepare conditionals
         tts.prepare_conditionals(str(voice_path), exaggeration=0.5)
-        
-        # Generate audio
-        audio = tts.generate(
-            text=text,
-            cfg_weight=0.5,
-            exaggeration=0.5
-        )
-        
+
+        # Add timeout for audio generation
+        def generation_timeout_handler(signum, frame):
+            raise TimeoutError("Audio generation timed out after 600 seconds")
+
+        signal.signal(signal.SIGALRM, generation_timeout_handler)
+        signal.alarm(600)  # 10 minutes timeout for audio generation
+
+        try:
+            # Generate audio
+            audio = tts.generate(
+                text=text,
+                cfg_weight=0.5,
+                exaggeration=0.5
+            )
+            signal.alarm(0)  # Cancel the alarm
+        except TimeoutError:
+            print("Error: Audio generation timed out in synthesize_voice function")
+            raise
+
         # Save using torchaudio
         torchaudio.save(str(output_path), audio, tts.sr)
-        
+
     except Exception as e:
         print(f"Error synthesizing voice: {e}")
         # Create a silent audio file as fallback

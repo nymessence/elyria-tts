@@ -53,7 +53,7 @@ pip install numpy>=1.26.0 --force-reinstall --no-cache-dir
 case $ACCELERATOR_TYPE in
     "cpu")
         echo "Installing CPU version of PyTorch..."
-        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir
+        pip install torch==2.1.2+cpu torchaudio==2.1.2+cpu --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir
         ;;
     "cuda"|"gpu")
         echo "Installing CUDA version of PyTorch..."
@@ -61,11 +61,11 @@ case $ACCELERATOR_TYPE in
         ;;
     "tpu")
         echo "Installing TPU version of PyTorch..."
-        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir  # TPU support via XLA
+        pip install torch==2.1.2+cpu torchaudio==2.1.2+cpu --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir  # TPU support via XLA
         ;;
     *)
         echo "Unknown accelerator type: $ACCELERATOR_TYPE. Defaulting to CPU."
-        pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir
+        pip install torch==2.1.2+cpu torchaudio==2.1.2+cpu --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir
         ;;
 esac
 

@@ -68,7 +68,7 @@ python --version
 # ----------------------------
 # Base deps (NUMPY CAPPED)
 # ----------------------------
-uv pip install --python ${PYTHON_VERSION} \
+pip install \
   "numpy>=1.26,<2.5" \
   packaging typing-extensions
 
@@ -80,19 +80,19 @@ if python -c "import torch; print(torch.__version__)" 2>/dev/null; then
 else
   case "${ACCELERATOR_TYPE}" in
     cpu)
-      uv pip install --python ${PYTHON_VERSION} torch torchaudio
+      pip install torch torchaudio
       ;;
     cuda|gpu)
       # Kaggle CUDA stacks are fragile; use only if you know the image
-      uv pip install --python ${PYTHON_VERSION} \
+      pip install \
         torch torchaudio \
         --index-url https://download.pytorch.org/whl/cu118
       ;;
     tpu)
-      uv pip install --python ${PYTHON_VERSION} torch torchaudio
+      pip install torch torchaudio
       ;;
     *)
-      uv pip install --python ${PYTHON_VERSION} torch torchaudio
+      pip install torch torchaudio
       ;;
   esac
 fi

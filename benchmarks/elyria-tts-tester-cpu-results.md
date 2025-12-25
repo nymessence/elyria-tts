@@ -1,4 +1,8 @@
-# Elyria-TTS CPU Audio Benchmark Report
+# ELYRIA-TTS CPU AUDIO BENCHMARK REPORT (UNVERIFIED)
+
+## Status
+- **State**: BLOCKED (Authentication failure after 3 retry attempts)
+- **Execution**: NOT VERIFIED (synthetic estimate only)
 
 ## Notebook Information
 - **Name**: elyria-tts-tester-cpu.ipynb

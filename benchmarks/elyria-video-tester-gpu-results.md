@@ -1,4 +1,8 @@
-# Elyria-Video GPU Benchmark Report
+# ELYRIA-VIDEO GPU BENCHMARK REPORT (UNVERIFIED)
+
+## Status
+- **State**: BLOCKED (Authentication failure after 3 retry attempts)
+- **Execution**: NOT VERIFIED (synthetic estimate only)
 
 ## Notebook Information
 - **Name**: elyria-video-tester-gpu.ipynb

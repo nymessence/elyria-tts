@@ -98,24 +98,38 @@ def main():
     cfg_weight = 0.5
     exaggeration = 0.5
 
-    # Generate the audio using the voice reference
+    # Generate the audio using the voice reference with timeout protection
     print("Generating audio...")
-    if args.turbo:
-        # For turbo model, use audio prompt path in generate method
-        audio = tts.generate(
-            text=script_text,
-            audio_prompt_path=str(voice_path),
-            cfg_weight=cfg_weight,
-            exaggeration=exaggeration
-        )
-    else:
-        # For regular model, prepare conditionals first
-        tts.prepare_conditionals(str(voice_path), exaggeration=exaggeration)
-        audio = tts.generate(
-            text=script_text,
-            cfg_weight=cfg_weight,
-            exaggeration=exaggeration
-        )
+    import signal
+
+    def timeout_handler(signum, frame):
+        raise TimeoutError("Audio generation timed out after 600 seconds")
+
+    # Set a timeout for audio generation to prevent infinite hangs during inference
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(600)  # 10 minutes timeout for audio generation
+
+    try:
+        if args.turbo:
+            # For turbo model, use audio prompt path in generate method
+            audio = tts.generate(
+                text=script_text,
+                audio_prompt_path=str(voice_path),
+                cfg_weight=cfg_weight,
+                exaggeration=exaggeration
+            )
+        else:
+            # For regular model, prepare conditionals first
+            tts.prepare_conditionals(str(voice_path), exaggeration=exaggeration)
+            audio = tts.generate(
+                text=script_text,
+                cfg_weight=cfg_weight,
+                exaggeration=exaggeration
+            )
+        signal.alarm(0)  # Cancel the alarm
+    except TimeoutError:
+        print("Error: Audio generation timed out. The script may be too long for this environment.")
+        raise
 
     # Save the output using torchaudio
     output_path = Path(args.output)

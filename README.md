@@ -147,6 +147,24 @@ Conservative defaults are used for CPU inference:
 
 These values can be adjusted later for more expressive speech or GPU runs.
 
+## Kaggle Setup
+
+For Kaggle environments, we provide a specialized setup script that operates from `kaggle/working` and clones the repository into `/tmp`:
+
+```bash
+# Copy and paste this script into a Kaggle notebook cell to set up the environment
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/nymessence/elyria-tts/main/kaggle_setup.sh)"
+```
+
+The `kaggle_setup.sh` script:
+- Clones the repository to `/tmp` to avoid committing to Kaggle dataset
+- Sets up the Python environment in `/tmp`
+- Copies necessary files to `kaggle/working` for user access
+- Creates convenience scripts for easy execution
+- Installs all required dependencies including video synthesis dependencies
+
+After running the setup script, you can run synthesis commands with outputs saved to `kaggle/working/`.
+
 ## Kaggle Usage
 
 For Kaggle deployment, the repository will be cloned into `/tmp` but output should be saved to `kaggle/working`:

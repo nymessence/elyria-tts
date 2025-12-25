@@ -100,6 +100,7 @@ fi
 # ----------------------------
 # Verify torch binding
 # ----------------------------
+source .venv/bin/activate
 python - <<'EOF'
 import sys, torch
 print("Python:", sys.version)
@@ -111,23 +112,26 @@ EOF
 # ----------------------------
 # Chatterbox (source install, no deps)
 # ----------------------------
+source .venv/bin/activate
+
 if [ ! -d "${ROOT}/chatterbox" ]; then
   git clone https://github.com/resemble-ai/chatterbox.git "${ROOT}/chatterbox"
 fi
 
 cd chatterbox
-uv pip install --python python${PYTHON_VERSION} -e . --no-build-isolation --no-deps
+pip install -e . --no-build-isolation --no-deps
 cd "${ROOT}"
 
 # ----------------------------
 # App deps
 # ----------------------------
-uv pip install --python python${PYTHON_VERSION} \
+pip install \
   opencv-python pillow pydub requests
 
 # ----------------------------
 # Kaggle working files
 # ----------------------------
+source .venv/bin/activate
 mkdir -p kaggle/working
 cp -f voice_synthesizer.py kaggle/working/
 cp -f video_synthesizer.py kaggle/working/

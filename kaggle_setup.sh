@@ -92,7 +92,7 @@ else
 fi
 
 # Verify torch installation
-python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+source /tmp/elyria-tts/.venv/bin/activate && python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
 
 # Install chatterbox without its dependencies to avoid conflicts
 pip install -e . --no-build-isolation --no-deps

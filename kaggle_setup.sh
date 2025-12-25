@@ -26,6 +26,9 @@ apt install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv
 
 python${PYTHON_VERSION} --version
 
+# Install pip for Python 3.12
+python${PYTHON_VERSION} -m ensurepip --upgrade
+
 # ----------------------------
 # Install uv bound to Python 3.12
 # ----------------------------

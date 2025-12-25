@@ -6,9 +6,12 @@
 
 set -e  # Exit on any error
 
-# Update system and install Python 3.12
+# Define Python version
+PYTHON_VERSION="3.12"
+
+# Update system and install Python $PYTHON_VERSION
 apt update
-apt install python3.12 -y
+apt install python$PYTHON_VERSION -y
 
 # Default to CPU for Kaggle
 ACCELERATOR_TYPE=${1:-cpu}
@@ -34,12 +37,12 @@ if ! command -v uv &> /dev/null; then
     pip install uv
 fi
 
-# Pin Python 3.12 for uv
-echo "Pinning Python 3.12 for uv..."
-uv python pin 3.12
+# Pin Python $PYTHON_VERSION for uv
+echo "Pinning Python $PYTHON_VERSION for uv..."
+uv python pin $PYTHON_VERSION
 
-# Create Python 3.12 virtual environment in /tmp
-echo "Creating Python 3.12 virtual environment in /tmp..."
+# Create Python $PYTHON_VERSION virtual environment in /tmp
+echo "Creating Python $PYTHON_VERSION virtual environment in /tmp..."
 uv venv /tmp/elyria-tts/.venv
 
 # Activate virtual environment
@@ -67,8 +70,8 @@ else
     case $ACCELERATOR_TYPE in
         "cpu")
             echo "Installing CPU version of PyTorch..."
-            pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps
-            # Install torch dependencies separately to ensure Python 3.11 compatibility
+            pip install torch==2.1.2+cpu torchaudio==2.1.2+cpu --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps
+            # Install torch dependencies separately to ensure Python $PYTHON_VERSION compatibility
             pip install typing-extensions packaging
             ;;
         "cuda"|"gpu")
@@ -77,12 +80,12 @@ else
             ;;
         "tpu")
             echo "Installing TPU version of PyTorch..."
-            pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps  # TPU support via XLA
+            pip install torch==2.1.2+cpu torchaudio==2.1.2+cpu --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps  # TPU support via XLA
             pip install typing-extensions packaging
             ;;
         *)
             echo "Unknown accelerator type: $ACCELERATOR_TYPE. Defaulting to CPU."
-            pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps
+            pip install torch==2.1.2+cpu torchaudio==2.1.2+cpu --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir --no-deps
             pip install typing-extensions packaging
             ;;
     esac
